@@ -10,22 +10,22 @@ namespace CT_Queries
     {
         static async Task Main()
         {
-			var services = ConfigureServices();
-			var serviceProvider = services.BuildServiceProvider();
-			await serviceProvider.GetService<App>().Run();
-		}
+            var services = ConfigureServices();
+            var serviceProvider = services.BuildServiceProvider();
+            await serviceProvider.GetService<App>().Run();
+        }
 
-		private static IServiceCollection ConfigureServices()
-		{
-			IServiceCollection services = new ServiceCollection();
+        private static IServiceCollection ConfigureServices()
+        {
+            IServiceCollection services = new ServiceCollection();
 
-			var config = new ConfigurationBuilder()
-				.AddJsonStream(new MemoryStream(Encoding.ASCII.GetBytes(Config.Default)))
-				.Build();
-			services.AddSingleton(config);
-			services.UseCommercetools(config, "Client");
-			services.AddTransient<App>();
-			return services;
-		}
+            var config = new ConfigurationBuilder()
+                .AddJsonStream(new MemoryStream(Encoding.ASCII.GetBytes(Config.Default)))
+                .Build();
+            services.AddSingleton(config);
+            services.UseCommercetools(config, "Client");
+            services.AddTransient<App>();
+            return services;
+        }
     }
 }
