@@ -25,8 +25,8 @@ public class App
     {
         while (true)
         {
-            await AddTestNote();
 
+            Console.WriteLine("Press any key to run query again...");
             Console.ReadKey();
             Console.Clear();
         }
@@ -34,7 +34,7 @@ public class App
 
     private async Task AddTestNote()
     {
-        var customer = await _client.Builder().Customers().GetById("12332-CUST0M3R-GU1D-ID-ETC").ExecuteAsync();
+        var customer = await _client.Builder().Customers().GetById("207ce853-4816-4c9f-a2f9-d4aaee2d39bd").ExecuteAsync();
         await _client.Builder().Customers().UpdateById(customer).AddAction(() =>
             new commercetools.Sdk.Domain.Customers.UpdateActions.SetCustomFieldUpdateAction
             {
