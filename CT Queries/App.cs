@@ -103,6 +103,29 @@ public class App
         }).ExecuteAsync();
     }
 
+    private async Task UpdatePasswordHashAndSalt()
+    {
+        string customerPreviouslyHashedPassword = "customer-previous-hashed-password";
+        string customerPasswordSalt = "customer-password-salt";
+
+        var customer = await _client.Builder().Customers().GetById("80a1a150-d4bc-4149-b200-187a52b51c8b").ExecuteAsync();
+        var previouslyHashedPassword = customer.Custom.GetValue<string>(customerPreviouslyHashedPassword);
+        var passwordSalt = customer.Custom.GetValue<string>(customerPasswordSalt);
+
+        if (!string.IsNullOrWhiteSpace(previouslyHashedPassword) || !string.IsNullOrWhiteSpace(passwordSalt))
+            customer = await _client.Builder().Customers().UpdateById(customer)
+                .AddAction(new commercetools.Sdk.Domain.Customers.UpdateActions.SetCustomFieldUpdateAction
+                {
+                    Name = customerPreviouslyHashedPassword,
+                    Value = "",
+                })
+                .AddAction(new commercetools.Sdk.Domain.Customers.UpdateActions.SetCustomFieldUpdateAction
+                {
+                    Name = customerPasswordSalt,
+                    Value = "",
+                }).ExecuteAsync();
+    }
+
     private async Task AddTestNote()
     {
         var customer = await _client.Builder().Customers().GetById("207ce853-4816-4c9f-a2f9-d4aaee2d39bd").ExecuteAsync();
