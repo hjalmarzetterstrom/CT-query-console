@@ -32,6 +32,17 @@ public class App
         }
     }
 
+    private async Task RemoveCustomField()
+    {
+        var type = await _client.Builder().Types().GetByKey("cart-custom-type-v1").ExecuteAsync();
+        List<UpdateAction<commercetools.Sdk.Domain.Types.Type>> updateActions = new List<UpdateAction<commercetools.Sdk.Domain.Types.Type>>
+            {
+                new RemoveFieldDefinitionUpdateAction {FieldName = "ingridSelectedMethod"},
+            };
+
+        await _client.ExecuteAsync(new UpdateByIdCommand<commercetools.Sdk.Domain.Types.Type>(type, updateActions));
+    }
+
     private async Task AddTestNote()
     {
         var customer = await _client.Builder().Customers().GetById("207ce853-4816-4c9f-a2f9-d4aaee2d39bd").ExecuteAsync();
