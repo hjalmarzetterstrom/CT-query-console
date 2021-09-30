@@ -15,11 +15,18 @@ using commercetools.Sdk.Domain.Carts.UpdateActions;
 using commercetools.Sdk.Domain.Products.UpdateActions;
 using commercetools.Sdk.Domain.Types.UpdateActions;
 using commercetools.Sdk.Domain.Subscriptions;
+using Microsoft.Extensions.Configuration;
 
 public class App
 {
     private readonly IClient _client;
-    public App(IClient client) { _client = client; }
+    private readonly IConfigurationRoot _configuration;
+
+    public App(IClient client, IConfigurationRoot configuration)
+    {
+        _client = client;
+        _configuration = configuration;
+    }
 
     public async Task Run()
     {
@@ -152,6 +159,53 @@ public class App
         );
     }
 
+    private async Task ListSubscriptions()
+    {
+        var existingSubscriptions = await _client.Builder().Subscriptions().Query().ExecuteAsync();
+
+        existingSubscriptions.Results.ForEach(x => Console.WriteLine($"Subscription {x.Id}\r\nChanges:\r\n\t{string.Join("\r\n\t", x.Changes.Select(m => m.ResourceTypeId))}\r\nMessages:\r\n\t{string.Join("\r\n\t", x.Messages.Select(m => m.ResourceTypeId))}\r\n-------------"));
+    }
+
+    public async Task DeleteSubscription(string id)
+    {
+        var subscription = await _client.Builder().Subscriptions().GetById(id).ExecuteAsync();
+        _ = await _client.ExecuteAsync(new DeleteByIdCommand<Subscription>(subscription));
+
+        Console.WriteLine("Deleted subscription: " + subscription.Id);
+    }
+
+    public async Task CreateSubscription()
+    {
+        var destination = new AzureServiceBusDestination(_configuration.GetConnectionString("AzureServiceBus"));
+        var draft = new SubscriptionDraft
+        {
+            Destination = destination,
+            Messages = new List<MessageSubscription> {
+					//new MessageSubscription {ResourceTypeId = "review"},
+					//new MessageSubscription {ResourceTypeId = "cart"},
+					//new MessageSubscription {ResourceTypeId = "customer-group"},
+					//new MessageSubscription {ResourceTypeId = "payment"},
+					//new MessageSubscription {ResourceTypeId = "order"},
+					//new MessageSubscription {ResourceTypeId = "customer"},
+					//new MessageSubscription {ResourceTypeId = "product-type"},
+					//new MessageSubscription {ResourceTypeId = "category"},
+					//new MessageSubscription {ResourceTypeId = "inventory-entry"},
+					//new MessageSubscription {ResourceTypeId = "product"}
+				},
+            Changes = new List<ChangeSubscription>
+            {
+                //new ChangeSubscription {ResourceTypeId = "category"},
+                //new ChangeSubscription {ResourceTypeId = "product"},
+                //new ChangeSubscription {ResourceTypeId = "order"},
+                //state, discount-code, order-edit, cart-discount, payment, order, customer, category, type, inventory-entry, zone, shopping-list, review, cart, channel, tax-category, subscription, customer-group, store, product-type, product-discount, product, extension
+            }
+        };
+        var response = await _client.Builder().Subscriptions().Create(draft).ExecuteAsync();
+
+        Console.WriteLine($"Subscription added [{response.Id}] with resouce types: ");
+        draft.Messages.ForEach(x => Console.WriteLine("Message: " + x.ResourceTypeId));
+        draft.Changes.ForEach(x => Console.WriteLine("Change: " + x.ResourceTypeId));
+    }
 }
 
 public static class Extensions
