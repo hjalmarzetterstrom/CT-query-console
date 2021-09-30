@@ -92,6 +92,17 @@ public class App
         var result = await update.ExecuteAsync();
     }
 
+    private async Task RemoveLineItem()
+    {
+        var list = await _client.Builder().Carts().GetById("2e4e5020-a0c8-4a41-8573-ec915bc99e29").ExecuteAsync();
+
+        await _client.Builder().Carts().UpdateById(list).AddAction(new RemoveLineItemUpdateAction
+        {
+            LineItemId = "cacd2937-d8ba-4f37-bf1d-b6436659408b",
+            Quantity = 2,
+        }).ExecuteAsync();
+    }
+
     private async Task AddTestNote()
     {
         var customer = await _client.Builder().Customers().GetById("207ce853-4816-4c9f-a2f9-d4aaee2d39bd").ExecuteAsync();
