@@ -43,6 +43,55 @@ public class App
         await _client.ExecuteAsync(new UpdateByIdCommand<commercetools.Sdk.Domain.Types.Type>(type, updateActions));
     }
 
+    private async Task AddAssets()
+    {
+        var product = await _client.Builder().Products().GetById("86224042-c6b7-4b6e-8641-62841941a422").ExecuteAsync();
+        var masterVariant = product.MasterData.Current.MasterVariant;
+
+        var actions = new List<UpdateAction<Product>>
+            {
+                //new RemoveAssetUpdateAction(masterVariant.Sku, assetId: "ba28c05e-78d6-4367-abea-fb95b870aa7e"),
+                //new RemoveAssetUpdateAction(masterVariant.Sku, assetId: "e2400856-070b-40e9-8103-166e628263f7")
+
+                new AddAssetUpdateAction(masterVariant.Sku, new AssetDraft
+                {
+                    Key = product.Key + "_a_1",
+                    Name = new Dictionary<string, string> { { "sv-SE", product.Key + " asset 1" } }.ToLocalizedString(),
+                    Sources = new List<AssetSource>
+                    {
+                        new AssetSource
+                        {
+                            ContentType = "image/jpeg",
+                            Dimensions = new AssetDimensions { H = masterVariant.Images[0].Dimensions.H, W = masterVariant.Images[0].Dimensions.W },
+                            Key = "Excite_" + product.Key + "_as_1",
+                            Uri = masterVariant.Images[0].Url,
+                        }
+                    },
+                }, 0),
+                new AddAssetUpdateAction(masterVariant.Sku, new AssetDraft
+                {
+                    Key = product.Key + "_a_2",
+                    Name = new Dictionary<string, string> { { "sv-SE", product.Key + " asset 2" } }.ToLocalizedString(),
+                    Sources = new List<AssetSource>
+                    {
+                        new AssetSource
+                        {
+                            ContentType = "image/jpeg",
+                            Dimensions = new AssetDimensions { H = masterVariant.Images[1].Dimensions.H, W = masterVariant.Images[1].Dimensions.W },
+                            Key = "Excite_" + product.Key + "_as_2",
+                            Uri = masterVariant.Images[1].Url,
+                        }
+                    },
+                }, 1),
+            };
+
+
+        var update = _client.Builder().Products().UpdateById(product);
+        actions.ForEach(x => update.AddAction(x));
+
+        var result = await update.ExecuteAsync();
+    }
+
     private async Task AddTestNote()
     {
         var customer = await _client.Builder().Customers().GetById("207ce853-4816-4c9f-a2f9-d4aaee2d39bd").ExecuteAsync();
