@@ -166,7 +166,7 @@ public class App
         existingSubscriptions.Results.ForEach(x => Console.WriteLine($"Subscription {x.Id}\r\nChanges:\r\n\t{string.Join("\r\n\t", x.Changes.Select(m => m.ResourceTypeId))}\r\nMessages:\r\n\t{string.Join("\r\n\t", x.Messages.Select(m => m.ResourceTypeId))}\r\n-------------"));
     }
 
-    public async Task DeleteSubscription(string id)
+    private async Task DeleteSubscription(string id)
     {
         var subscription = await _client.Builder().Subscriptions().GetById(id).ExecuteAsync();
         _ = await _client.ExecuteAsync(new DeleteByIdCommand<Subscription>(subscription));
@@ -174,7 +174,7 @@ public class App
         Console.WriteLine("Deleted subscription: " + subscription.Id);
     }
 
-    public async Task CreateSubscription()
+    private async Task CreateSubscription()
     {
         var destination = new AzureServiceBusDestination(_configuration.GetConnectionString("AzureServiceBus"));
         var draft = new SubscriptionDraft
