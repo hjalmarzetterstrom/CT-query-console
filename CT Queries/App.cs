@@ -137,6 +137,21 @@ public class App
             }
             ).ExecuteAsync();
     }
+
+    private async Task ShowShoppingList()
+    {
+        var list = await _client.Builder().ShoppingLists().GetByKey("wishlist_cce1728b-05ca-4884-9c71-cca036019e28", new List<Expansion<ShoppingList>>
+                {
+                    new LineItemExpansion<ShoppingList>(x => x.LineItems.ExpandVariants())
+                }).ExecuteAsync();
+
+        list.LineItems.ForEach(x => Console.WriteLine(
+            x.Name.TryGetValue("sv-SE", out var name)
+                ? name : x.Name.FirstOrDefault().Value
+            )
+        );
+    }
+
 }
 
 public static class Extensions
