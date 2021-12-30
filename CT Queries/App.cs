@@ -1,21 +1,26 @@
-﻿using commercetools.Sdk.Client;
+﻿using Avensia.Excite.Commercetools.Subscriptions;
+using commercetools.Sdk.Client;
+using commercetools.Sdk.Domain;
+using commercetools.Sdk.Domain.APIExtensions;
+using commercetools.Sdk.Domain.Carts.UpdateActions;
+using commercetools.Sdk.Domain.Messages.Customers;
 using commercetools.Sdk.Domain.Predicates;
+using commercetools.Sdk.Domain.Products.UpdateActions;
+using commercetools.Sdk.Domain.ProductTypes.UpdateActions;
 using commercetools.Sdk.Domain.Query;
 using commercetools.Sdk.Domain.ShoppingLists;
-using commercetools.Sdk.HttpApi.CommandBuilders;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using commercetools.Sdk.Domain;
-using commercetools.Sdk.Domain.Customers;
-using commercetools.Sdk.Domain.Customers.UpdateActions;
-using System.Globalization;
-using commercetools.Sdk.Domain.Carts.UpdateActions;
-using commercetools.Sdk.Domain.Products.UpdateActions;
-using commercetools.Sdk.Domain.Types.UpdateActions;
 using commercetools.Sdk.Domain.Subscriptions;
+using commercetools.Sdk.Domain.Types.UpdateActions;
+using commercetools.Sdk.HttpApi.CommandBuilders;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+using commercetools.Sdk.Domain.Orders;
+using commercetools.Sdk.Domain.Messages.Orders;
 
 public class App
 {
