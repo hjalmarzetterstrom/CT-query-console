@@ -44,6 +44,20 @@ public class App
         }
     }
 
+    private async Task RemoveProductAttribute()
+    {
+        var type = await _client.Builder().ProductTypes().GetByKey("excite-package").ExecuteAsync();
+        List<UpdateAction<ProductType>> updateActions = new List<UpdateAction<ProductType>>
+            {
+                new RemoveAttributeDefinitionUpdateAction
+                {
+                    Name = "productRatings"
+                }
+            };
+
+        await _client.ExecuteAsync(new UpdateByIdCommand<ProductType>(type, updateActions));
+    }
+
     private async Task RemoveCustomField()
     {
         var type = await _client.Builder().Types().GetByKey("cart-custom-type-v1").ExecuteAsync();
