@@ -38,7 +38,10 @@ public class App
         while (true)
         {
 
-            Console.WriteLine("Press any key to run query again...");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Black;
+
+            Console.WriteLine("\r\nPress any key to run query again...");
             Console.ReadKey();
             Console.Clear();
         }
@@ -187,6 +190,7 @@ public class App
 
     private async Task DeleteSubscription(string id)
     {
+        Console.ForegroundColor = ConsoleColor.DarkRed;
         var subscription = await _client.Builder().Subscriptions().GetById(id).ExecuteAsync();
         _ = await _client.ExecuteAsync(new DeleteByIdCommand<Subscription>(subscription));
 
@@ -199,31 +203,35 @@ public class App
         var draft = new SubscriptionDraft
         {
             Destination = destination,
-            Messages = new List<MessageSubscription> {
-					//new MessageSubscription {ResourceTypeId = "review"},
-					//new MessageSubscription {ResourceTypeId = "cart"},
-					//new MessageSubscription {ResourceTypeId = "customer-group"},
-					//new MessageSubscription {ResourceTypeId = "payment"},
-					//new MessageSubscription {ResourceTypeId = "order"},
-					//new MessageSubscription {ResourceTypeId = "customer"},
-					//new MessageSubscription {ResourceTypeId = "product-type"},
-					//new MessageSubscription {ResourceTypeId = "category"},
-					//new MessageSubscription {ResourceTypeId = "inventory-entry"},
-					//new MessageSubscription {ResourceTypeId = "product"}
-				},
-            Changes = new List<ChangeSubscription>
+            Messages = new List<MessageSubscription>
             {
-                //new ChangeSubscription {ResourceTypeId = "category"},
-                //new ChangeSubscription {ResourceTypeId = "product"},
-                //new ChangeSubscription {ResourceTypeId = "order"},
-                //state, discount-code, order-edit, cart-discount, payment, order, customer, category, type, inventory-entry, zone, shopping-list, review, cart, channel, tax-category, subscription, customer-group, store, product-type, product-discount, product, extension
+                new MessageSubscription
+                {
+                    ResourceTypeId = ReferenceTypeId.Order.GetDescription(),
+                    Types = new List<string>
+                {
+                    new ExtendedOrderStateTransitionMessage().Type,
+                    new ReturnInfoAddedMessage().Type,
+                    new DeliveryAddedMessage().Type
+                }
+                }
             }
         };
         var response = await _client.Builder().Subscriptions().Create(draft).ExecuteAsync();
 
+        Console.ForegroundColor = ConsoleColor.DarkGreen;
+
         Console.WriteLine($"Subscription added [{response.Id}] with resouce types: ");
-        draft.Messages.ForEach(x => Console.WriteLine("Message: " + x.ResourceTypeId));
-        draft.Changes.ForEach(x => Console.WriteLine("Change: " + x.ResourceTypeId));
+        draft.Messages?.ForEach(x => Console.WriteLine("Message: " + x.ResourceTypeId));
+        draft.Changes?.ForEach(x => Console.WriteLine("Change: " + x.ResourceTypeId));
+
+        Console.ForegroundColor = ConsoleColor.White;
+
+        Console.WriteLine("\r\nPress enter to delete subscription or close application to keep it.");
+        Console.ReadLine();
+
+        await DeleteSubscription(response.Id);
+    }
     }
 }
 
