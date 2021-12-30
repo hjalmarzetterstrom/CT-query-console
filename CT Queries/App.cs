@@ -1,4 +1,7 @@
-﻿using commercetools.Sdk.Client;
+using Avensia.Excite.Commercetools.Subscriptions;
+using BabyWorld.Core.Voyado;
+using BabyWorld.Core.Customers;
+using commercetools.Sdk.Client;
 using commercetools.Sdk.Domain;
 using commercetools.Sdk.Domain.APIExtensions;
 using commercetools.Sdk.Domain.Carts.UpdateActions;
@@ -34,10 +37,29 @@ public class App
         _configuration = configuration;
     }
 
-    public async Task Run()
+    public async Task Run(IServiceProvider service)
     {
         while (true)
         {
+            //var crm = service.GetService<VoyadoContactService>();
+            //var customer = await _client.Builder().Customers().GetById("b47c82f8-8f20-4a72-a0a3-ac03a13e1114").ExecuteAsync();
+
+            //var contact = await crm.FindOrCreateMemberWithConsent(customer);
+
+            var orderService = service.GetService<VoyadoOrderService>();
+            var expands = new List<Expansion<Order>>
+            {
+                new ReferenceExpansion<Order>(x => x.LineItems.ExpandAll().Variant.Prices.ExpandAll().Discounted.Discount),
+                new ReferenceExpansion<Order>(x => x.LineItems.ExpandAll().DiscountedPricePerQuantity.ExpandAll().DiscountedPrice.IncludedDiscounts.ExpandAll().Discount),
+                new ReferenceExpansion<Order>(x => x.PaymentInfo.Payments.ExpandAll()),
+            };
+
+            var order = await _client.Builder().Orders().GetById("bbb55c39-388f-429d-af17-d4c121dc8c1b", expands).ExecuteAsync();
+            var returnInfo = order.ReturnInfo.First();
+
+            await orderService.PostReturnAsync(order, returnInfo);
+
+            //await CreateSubscription();
 
             await UpdateSubscription();
 
