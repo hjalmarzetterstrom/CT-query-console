@@ -232,6 +232,45 @@ public class App
 
         await DeleteSubscription(response.Id);
     }
+
+    private async Task CreateExtension()
+    {
+        var ngrokUrl = "http://675b-217-115-58-195.ngrok.io";
+        var extensionUrl = new Uri(new Uri(ngrokUrl), "/api/commercetools/extensions/excite/customers").AbsoluteUri;
+
+        var extensionDraft = new ExtensionDraft
+        {
+            Destination = new HttpDestination
+            {
+                Authentication = new AuthorizationHeader
+                {
+                    HeaderValue = "localhostApiKey"
+                },
+                Url = extensionUrl
+            },
+            Key = "hjz-test-extension",
+            TimeoutInMs = 2000,
+            Triggers = new List<Trigger>
+            {
+                new Trigger
+                {
+                    Actions = new List<TriggerType>
+                    {
+                        TriggerType.Create
+                    },
+                    ResourceTypeId = ExtensionResourceType.Customer
+                }
+            }
+        };
+
+        var extension = await _client.ExecuteAsync(new CreateCommand<Extension>(extensionDraft));
+
+        Console.WriteLine($"Extension created with ID {extension.Id}");
+        Console.WriteLine($"Press enter to delete extension...");
+        Console.ReadLine();
+
+        await _client.ExecuteAsync(extension.DeleteById());
+        Console.WriteLine($"Deleted extension with ID {extension.Id}");
     }
 }
 
