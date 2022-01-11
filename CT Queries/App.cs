@@ -1,5 +1,4 @@
-﻿using Avensia.Excite.Commercetools.Subscriptions;
-using commercetools.Sdk.Client;
+﻿using commercetools.Sdk.Client;
 using commercetools.Sdk.Domain;
 using commercetools.Sdk.Domain.APIExtensions;
 using commercetools.Sdk.Domain.Carts.UpdateActions;
@@ -21,6 +20,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using commercetools.Sdk.Domain.Orders;
 using commercetools.Sdk.Domain.Messages.Orders;
+using commercetools.Sdk.Domain.Messages.Products;
+using commercetools.Sdk.Domain.Subscriptions.UpdateActions;
 
 public class App
 {
@@ -37,6 +38,8 @@ public class App
     {
         while (true)
         {
+
+            await UpdateSubscription();
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
@@ -209,11 +212,18 @@ public class App
                 {
                     ResourceTypeId = ReferenceTypeId.Order.GetDescription(),
                     Types = new List<string>
+                    {
+                        new ReturnInfoAddedMessage().Type,
+                        new DeliveryAddedMessage().Type
+                    }
+                },
+                new MessageSubscription
                 {
-                    new ExtendedOrderStateTransitionMessage().Type,
-                    new ReturnInfoAddedMessage().Type,
-                    new DeliveryAddedMessage().Type
-                }
+                    ResourceTypeId = ReferenceTypeId.Product.GetDescription(),
+                    Types = new List<string>
+                    {
+                        new ProductPublishedMessage().Type
+                    }
                 }
             }
         };
@@ -231,6 +241,41 @@ public class App
         Console.ReadLine();
 
         await DeleteSubscription(response.Id);
+    }
+
+    private async Task UpdateSubscription()
+    {
+        var action = new SetMessagesUpdateAction
+        {
+            Messages  = new List<MessageSubscription>
+            {
+                new MessageSubscription
+                {
+                    ResourceTypeId = ReferenceTypeId.Order.GetDescription(),
+                    Types = new List<string>
+                    {
+                        new OrderCreatedMessage().Type,
+                        new ReturnInfoAddedMessage().Type
+                    }
+                },
+                new MessageSubscription
+                {
+                    ResourceTypeId = ReferenceTypeId.Product.GetDescription(),
+                    Types = new List<string>
+                    {
+                        new ProductPublishedMessage().Type,
+                        new ProductCreatedMessage().Type
+                    }
+                }
+            }
+        };
+
+        var subscription = await _client.Builder().Subscriptions().GetById("19312fb4-2d62-483c-9555-05c67338a4fc").ExecuteAsync();
+        var response = await _client.Builder().Subscriptions().UpdateById(subscription).AddAction(action).ExecuteAsync();
+
+        Console.WriteLine($"Subscription updated [{response.Id}]: ");
+        response.Messages?.ForEach(x => Console.WriteLine("Message: " + x.ResourceTypeId));
+        response.Changes?.ForEach(x => Console.WriteLine("Change: " + x.ResourceTypeId));
     }
 
     private async Task CreateExtension()
