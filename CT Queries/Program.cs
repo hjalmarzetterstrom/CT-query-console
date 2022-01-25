@@ -1,9 +1,15 @@
-﻿using Avensia.Excite.Core.Content;
+﻿using Avensia.Excite.Commercetools;
+using Avensia.Excite.Core.Content;
 using Avensia.Excite.Core.Hosting;
+using Avensia.Excite.TestFreaks;
+using Avensia.Excite.TestFreaks.Extensions;
 using BabyWorld.Core.Customers;
+using BabyWorld.Core.Features.ProductRatings;
 using BabyWorld.Core.Voyado;
 using BabyWorld.Core.Voyado.Extensions;
+using commercetools.Sdk.Domain;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -37,14 +43,18 @@ namespace CT_Queries
             services.AddSingleton<IConfiguration>(config);
             services.AddSingleton<VoyadoContextProviderBase, VoyadoContextProvider>();
             services.AddSingleton<VoyadoOrderService>();
+            services.AddSingleton<TestFreaksContextProviderBase, TestFreaksContextProvider>();
+            services.AddTestFreaksBackend(config);
             services.AddSingleton<ISiteLoader, Fake>();
             services.AddSingleton<IContentUrlGenerator, Fake>();
+            services.AddSingleton<IAssetUrlResolver, Fake>();
+            services.AddSingleton<IMemoryCache, Fake>();
             services.AddTransient<App>();
             return services;
         }
     }
 
-    class Fake : ISiteLoader, IContentUrlGenerator, ISite
+    class Fake : ISiteLoader, IContentUrlGenerator, ISite, IAssetUrlResolver, IMemoryCache
     {
         public SiteId SiteId => throw new NotImplementedException();
 
@@ -72,9 +82,24 @@ namespace CT_Queries
             throw new NotImplementedException();
         }
 
+        public ICacheEntry CreateEntry(object key)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IList<ISite>> GetAllAsync()
         {
             throw new System.NotImplementedException();
+        }
+
+        public string GetAssetUrl(AssetSource asset)
+        {
+            return asset?.Uri?.ToString() ?? "";
         }
 
         public async Task<ISite> GetAsync(SiteId siteId)
@@ -95,6 +120,11 @@ namespace CT_Queries
         public ISite GetByHttpContext(HttpContext httpContext)
         {
             throw new System.NotImplementedException();
+        }
+
+        public ValueTask<ContentUrl> GetCanonicalContantUrlAsync(IContent content, HttpContext httpContext)
+        {
+            throw new NotImplementedException();
         }
 
         public ValueTask<Uri> GetCanonicalUriAsync(IContent content, ISite site, SiteDomain domain, CultureInfo language)
@@ -144,7 +174,7 @@ namespace CT_Queries
 
         public ValueTask<Uri> GetUriAsync(ContentUrl contentUrl, ISite site, SiteDomain domain, CultureInfo language, bool ignoreLanguageInPath = false)
         {
-            throw new NotImplementedException();
+            return new ValueTask<Uri>();
         }
 
         public ValueTask<string> GetUrlAsync(IContent content, HttpContext httpContext)
@@ -172,9 +202,19 @@ namespace CT_Queries
             throw new NotImplementedException();
         }
 
+        public void Remove(object key)
+        {
+            throw new NotImplementedException();
+        }
+
         public bool TryGetByHttpContext(HttpContext httpContext, out ISite site)
         {
             throw new System.NotImplementedException();
+        }
+
+        public bool TryGetValue(object key, out object value)
+        {
+            throw new NotImplementedException();
         }
     }
 }

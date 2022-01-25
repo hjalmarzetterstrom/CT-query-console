@@ -25,6 +25,7 @@ using commercetools.Sdk.Domain.Orders;
 using commercetools.Sdk.Domain.Messages.Orders;
 using commercetools.Sdk.Domain.Messages.Products;
 using commercetools.Sdk.Domain.Subscriptions.UpdateActions;
+using Avensia.Excite.TestFreaks;
 
 public class App
 {
@@ -41,25 +42,10 @@ public class App
     {
         while (true)
         {
-            //var crm = service.GetService<VoyadoContactService>();
-            //var customer = await _client.Builder().Customers().GetById("b47c82f8-8f20-4a72-a0a3-ac03a13e1114").ExecuteAsync();
+            var orderService = service.GetRequiredService<ITestFreaksOrderService>();
+            var order = await _client.Builder().Orders().GetById("2c77460f-5027-4ad7-aba1-df2fb81941cf").ExecuteAsync();
 
-            //var contact = await crm.FindOrCreateMemberWithConsent(customer);
-
-            var orderService = service.GetService<VoyadoOrderService>();
-            var expands = new List<Expansion<Order>>
-            {
-                new ReferenceExpansion<Order>(x => x.LineItems.ExpandAll().Variant.Prices.ExpandAll().Discounted.Discount),
-                new ReferenceExpansion<Order>(x => x.LineItems.ExpandAll().DiscountedPricePerQuantity.ExpandAll().DiscountedPrice.IncludedDiscounts.ExpandAll().Discount),
-                new ReferenceExpansion<Order>(x => x.PaymentInfo.Payments.ExpandAll()),
-            };
-
-            var order = await _client.Builder().Orders().GetById("bbb55c39-388f-429d-af17-d4c121dc8c1b", expands).ExecuteAsync();
-            var returnInfo = order.ReturnInfo.First();
-
-            await orderService.PostReturnAsync(order, returnInfo);
-
-            //await CreateSubscription();
+            await orderService.SendOrderUpdateAsync(order);
 
             await UpdateSubscription();
 
@@ -70,6 +56,30 @@ public class App
             Console.ReadKey();
             Console.Clear();
         }
+    }
+
+    private async Task PostToVoyado(IServiceProvider service)
+    {
+        //var crm = service.GetService<VoyadoContactService>();
+        //var customer = await _client.Builder().Customers().GetById("b47c82f8-8f20-4a72-a0a3-ac03a13e1114").ExecuteAsync();
+
+        //var contact = await crm.FindOrCreateMemberWithConsent(customer);
+
+        var orderService = service.GetService<VoyadoOrderService>();
+        var expands = new List<Expansion<Order>>
+        {
+            new ReferenceExpansion<Order>(x => x.LineItems.ExpandAll().Variant.Prices.ExpandAll().Discounted.Discount),
+            new ReferenceExpansion<Order>(x => x.LineItems.ExpandAll().DiscountedPricePerQuantity.ExpandAll().DiscountedPrice.IncludedDiscounts.ExpandAll().Discount),
+            new ReferenceExpansion<Order>(x => x.PaymentInfo.Payments.ExpandAll()),
+        };
+
+        var order = await _client.Builder().Orders().GetById("f61066b0-35d4-4beb-99f7-33afbdf478b6", expands).ExecuteAsync();
+        var returnInfo = order.ReturnInfo.FirstOrDefault();
+        var delivery = order.ShippingInfo.Deliveries.Select(x => new Delivery { Items = x.Items, Address = x.Address, CreateAt = x.CreatedAt, Id = x.Id, Parcels = x.Parcels }).FirstOrDefault();
+        await orderService.PostConfirmationAsync(order);
+        await orderService.PostCancellationAsync(order);
+        await orderService.PostDeliveryAsync(order, delivery);
+        await orderService.PostReturnAsync(order, returnInfo);
     }
 
     private async Task RemoveProductAttribute()
@@ -235,16 +245,7 @@ public class App
                     ResourceTypeId = ReferenceTypeId.Order.GetDescription(),
                     Types = new List<string>
                     {
-                        new ReturnInfoAddedMessage().Type,
-                        new DeliveryAddedMessage().Type
-                    }
-                },
-                new MessageSubscription
-                {
-                    ResourceTypeId = ReferenceTypeId.Product.GetDescription(),
-                    Types = new List<string>
-                    {
-                        new ProductPublishedMessage().Type
+                        new OrderReturnShipmentStateChangedMessage().Type,
                     }
                 }
             }
