@@ -5,9 +5,9 @@ using commercetools.Sdk.Client;
 using commercetools.Sdk.Domain;
 using commercetools.Sdk.Domain.APIExtensions;
 using commercetools.Sdk.Domain.Carts.UpdateActions;
+using commercetools.Sdk.Domain.Products.UpdateActions;
 using commercetools.Sdk.Domain.Messages.Customers;
 using commercetools.Sdk.Domain.Predicates;
-using commercetools.Sdk.Domain.Products.UpdateActions;
 using commercetools.Sdk.Domain.ProductTypes.UpdateActions;
 using commercetools.Sdk.Domain.Query;
 using commercetools.Sdk.Domain.ShoppingLists;
@@ -42,12 +42,7 @@ public class App
     {
         while (true)
         {
-            var orderService = service.GetRequiredService<ITestFreaksOrderService>();
-            var order = await _client.Builder().Orders().GetById("2c77460f-5027-4ad7-aba1-df2fb81941cf").ExecuteAsync();
-
-            await orderService.SendOrderUpdateAsync(order);
-
-            await UpdateSubscription();
+            await PostToVoyado(service);
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
@@ -58,13 +53,16 @@ public class App
         }
     }
 
+    private async Task PostToTestFreaks(IServiceProvider service)
+    {
+        var orderService = service.GetRequiredService<ITestFreaksOrderService>();
+        var order = await _client.Builder().Orders().GetById("924a072b-27f0-49cc-aab3-8f3ec744b116").ExecuteAsync();
+
+        await orderService.SendOrderUpdateAsync(order);
+    }
+
     private async Task PostToVoyado(IServiceProvider service)
     {
-        //var crm = service.GetService<VoyadoContactService>();
-        //var customer = await _client.Builder().Customers().GetById("b47c82f8-8f20-4a72-a0a3-ac03a13e1114").ExecuteAsync();
-
-        //var contact = await crm.FindOrCreateMemberWithConsent(customer);
-
         var orderService = service.GetService<VoyadoOrderService>();
         var expands = new List<Expansion<Order>>
         {
@@ -73,13 +71,17 @@ public class App
             new ReferenceExpansion<Order>(x => x.PaymentInfo.Payments.ExpandAll()),
         };
 
-        var order = await _client.Builder().Orders().GetById("f61066b0-35d4-4beb-99f7-33afbdf478b6", expands).ExecuteAsync();
-        var returnInfo = order.ReturnInfo.FirstOrDefault();
-        var delivery = order.ShippingInfo.Deliveries.Select(x => new Delivery { Items = x.Items, Address = x.Address, CreateAt = x.CreatedAt, Id = x.Id, Parcels = x.Parcels }).FirstOrDefault();
+        var order = await _client.Builder().Orders().GetById("e24e0bef-c56c-4aeb-9176-d5b90133e918", expands).ExecuteAsync();
+        order.CustomerEmail = "hjalmar.zetterstrom@avensia.com";
         await orderService.PostConfirmationAsync(order);
-        await orderService.PostCancellationAsync(order);
-        await orderService.PostDeliveryAsync(order, delivery);
-        await orderService.PostReturnAsync(order, returnInfo);
+
+        //await orderService.PostCancellationAsync(order);
+
+        //var delivery = order.ShippingInfo.Deliveries.Select(x => new Delivery { Items = x.Items, Address = x.Address, CreateAt = x.CreatedAt, Id = x.Id, Parcels = x.Parcels }).FirstOrDefault();
+        //await orderService.PostDeliveryAsync(order, delivery);
+
+        //var returnInfo = order.ReturnInfo.FirstOrDefault();
+        //await orderService.PostReturnAsync(order, returnInfo);
     }
 
     private async Task RemoveProductAttribute()
@@ -245,7 +247,7 @@ public class App
                     ResourceTypeId = ReferenceTypeId.Order.GetDescription(),
                     Types = new List<string>
                     {
-                        new OrderReturnShipmentStateChangedMessage().Type,
+                        new ExtendedOrderStateTransitionMessage().Type,
                     }
                 }
             }
@@ -277,23 +279,18 @@ public class App
                     ResourceTypeId = ReferenceTypeId.Order.GetDescription(),
                     Types = new List<string>
                     {
+                        new ExtendedOrderStateTransitionMessage().Type,
                         new OrderCreatedMessage().Type,
+                        new DeliveryAddedMessage().Type,
+                        new OrderEditAppliedMessage().Type,
+                        new OrderReturnShipmentStateChangedMessage().Type,
                         new ReturnInfoAddedMessage().Type
-                    }
-                },
-                new MessageSubscription
-                {
-                    ResourceTypeId = ReferenceTypeId.Product.GetDescription(),
-                    Types = new List<string>
-                    {
-                        new ProductPublishedMessage().Type,
-                        new ProductCreatedMessage().Type
                     }
                 }
             }
         };
 
-        var subscription = await _client.Builder().Subscriptions().GetById("19312fb4-2d62-483c-9555-05c67338a4fc").ExecuteAsync();
+        var subscription = await _client.Builder().Subscriptions().GetById("e435a4bc-aad2-4709-a2d8-b2989fc46852").ExecuteAsync();
         var response = await _client.Builder().Subscriptions().UpdateById(subscription).AddAction(action).ExecuteAsync();
 
         Console.WriteLine($"Subscription updated [{response.Id}]: ");
